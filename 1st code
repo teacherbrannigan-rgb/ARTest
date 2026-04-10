@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>NZ Forest 360 Experience</title>
+    <meta name="description" content="360 Forest Experience">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <a-assets>
+        <img id="forest" src="your-image-url.jpg" crossorigin="anonymous">
+      </a-assets>
+
+      <a-sky src="#forest" rotation="0 -90 0"></a-sky>
+
+      <a-entity camera look-controls>
+        <a-cursor></a-cursor>
+      </a-entity>
+    </a-scene>
+  </body>
+</html>
