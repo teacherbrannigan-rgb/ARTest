@@ -5,6 +5,14 @@
     <title>Interactive NZ Forest</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-event-set-component@5.0.0/dist/aframe-event-set-component.min.js"></script>
+    <style>
+  /* Prevents the browser from trying to scroll while you look around */
+  body {
+    margin: 0;
+    overflow: hidden;
+    touch-action: none; 
+  }
+    </style>
   </head>
   <body>
     <a-scene cursor="fuse: false; rayOrigin: mouse">
