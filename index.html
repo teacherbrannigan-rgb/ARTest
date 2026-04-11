@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>360 Experience Hub</title>
+    <title>360 Historical Viewer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <style>
@@ -16,20 +16,18 @@
         justify-content: center; align-items: center; color: white;
       }
 
-      .btn-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-
       .choice-btn {
-        padding: 20px 40px; font-size: 1.1rem; cursor: pointer;
+        margin: 15px; padding: 20px 40px; font-size: 1.2rem; cursor: pointer;
         border: 2px solid white; background: rgba(255,255,255,0.1);
-        color: white; border-radius: 10px; transition: 0.3s;
+        color: white; border-radius: 12px; transition: 0.3s;
       }
 
       .choice-btn:hover { background: white; color: black; }
 
-      /* Back Button (hidden during menu) */
+      /* Back Button */
       #backBtn {
         position: fixed; top: 20px; left: 20px; z-index: 8888;
-        padding: 10px 20px; background: rgba(0,0,0,0.5);
+        padding: 10px 20px; background: rgba(0,0,0,0.6);
         color: white; border: 1px solid white; border-radius: 5px;
         display: none; cursor: pointer;
       }
@@ -40,79 +38,57 @@
     <button id="backBtn" onclick="returnToMenu()">← Back to Menu</button>
 
     <div id="menu">
-      <h1>Historical & Natural Journeys</h1>
-      <p>Select an experience to begin (Enables 360° Tracking)</p>
-      <div class="btn-container">
-        <button class="choice-btn" onclick="startScene('forest', 'Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png')">NZ Forest</button>
-        <button class="choice-btn" onclick="startScene('trench', 'Trench sphere.jpg')">WW1 Trench</button>
-      </div>
+      <h1>360 Experience Hub</h1>
+      <p>Select a location to explore</p>
+      <button class="choice-btn" onclick="startScene('forest', 'Gemini_Generated_Image_ojdhy8ojdh.png')">New Zealand Forest</button>
+      <button class="choice-btn" onclick="startScene('trench', 'Trench sphere.jpg')">WW1 Trench</button>
     </div>
 
-    <a-scene id="mainScene" style="display: none;" cursor="fuse: false; rayOrigin: mouse">
+    <a-scene id="mainScene" style="display: none;">
       <a-assets>
-        <img id="skyTexture" src="" crossorigin="anonymous">
+        <img id="forestTex" src="forest-image.jpg" crossorigin="anonymous">
+        <img id="trenchTex" src="trench-image.jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-sky id="skyDisplay" src="#skyTexture" rotation="0 -90 0"></a-sky>
-
-      <a-entity id="interactiveElements"></a-entity>
+      <a-sky id="skyDisplay" rotation="0 -90 0"></a-sky>
 
       <a-entity id="cameraRig" position="0 1.6 0">
         <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
-          <a-cursor color="yellow"></a-cursor>
         </a-entity>
       </a-entity>
     </a-scene>
 
     <script>
-      const menu = document.getElementById('menu');
-      const scene = document.getElementById('mainScene');
-      const backBtn = document.getElementById('backBtn');
-      const sky = document.getElementById('skyTexture');
-      const elements = document.getElementById('interactiveElements');
-
-      function startScene(type, imagePath) {
-        // 1. Request Sensor Permissions for Mobile
+      function startScene(type, img) {
+        // Request Permissions for Mobile Motion Sensors
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission().then(response => {
-            if (response === 'granted') { loadScene(type, imagePath); }
-          }).catch(console.error);
+          DeviceOrientationEvent.requestPermission().then(res => {
+            if (res === 'granted') showScene(type);
+          }).catch(err => {
+            console.log(err);
+            showScene(type); // Fallback if permission fails
+          });
         } else {
-          loadScene(type, imagePath);
+          showScene(type);
         }
       }
 
-      function loadScene(type, imagePath) {
-        // Set the image
-        sky.setAttribute('src', imagePath);
-        
-        // Clear previous hitboxes
-        elements.innerHTML = '';
+      function showScene(type) {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('mainScene').style.display = 'block';
+        document.getElementById('backBtn').style.display = 'block';
 
-        // UI Toggle
-        menu.style.display = 'none';
-        scene.style.display = 'block';
-        backBtn.style.display = 'block';
+        const sky = document.getElementById('skyDisplay');
+        // Set the sky to use the preloaded asset ID
+        sky.setAttribute('src', (type === 'forest') ? '#forestTex' : '#trenchTex');
         
-        // Force A-Frame to recalculate size
+        // Ensure A-Frame refreshes the layout for the device
         document.querySelector('a-scene').resize();
       }
 
-      function addHitbox(pos, text, color) {
-        const box = document.createElement('a-cylinder');
-        box.setAttribute('position', pos);
-        box.setAttribute('radius', '0.5');
-        box.setAttribute('height', '3');
-        box.setAttribute('color', color);
-        box.setAttribute('opacity', '0.3'); // Set to 0 to hide later
-        box.setAttribute('onclick', `alert('${text}')`);
-        elements.appendChild(box);
-      }
-
       function returnToMenu() {
-        menu.style.display = 'flex';
-        scene.style.display = 'none';
-        backBtn.style.display = 'none';
+        // Refreshing is the cleanest way to reset the VR state
+        location.reload();
       }
     </script>
   </body>
