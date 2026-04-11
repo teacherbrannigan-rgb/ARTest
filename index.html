@@ -2,41 +2,60 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>NZ Forest Interactive</title>
+    <title>360 Experience Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background-color: #000; }
-      /* The Overlay: Forces a clean "Start" click */
-      #overlay {
+      body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
+      
+      /* Main Menu Overlay */
+      #menu {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); z-index: 9999;
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        color: white; font-family: sans-serif; text-align: center;
+        background: radial-gradient(circle, #2c3e50, #000);
+        z-index: 9999; display: flex; flex-direction: column; 
+        justify-content: center; align-items: center; color: white;
       }
-      button {
-        padding: 20px 40px; font-size: 1.2rem; background: #228B22;
-        color: white; border: none; border-radius: 10px; cursor: pointer;
+
+      .btn-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+      .choice-btn {
+        padding: 20px 40px; font-size: 1.1rem; cursor: pointer;
+        border: 2px solid white; background: rgba(255,255,255,0.1);
+        color: white; border-radius: 10px; transition: 0.3s;
+      }
+
+      .choice-btn:hover { background: white; color: black; }
+
+      /* Back Button (hidden during menu) */
+      #backBtn {
+        position: fixed; top: 20px; left: 20px; z-index: 8888;
+        padding: 10px 20px; background: rgba(0,0,0,0.5);
+        color: white; border: 1px solid white; border-radius: 5px;
+        display: none; cursor: pointer;
       }
     </style>
   </head>
   <body>
 
-    <div id="overlay">
-      <h1>New Zealand Forest</h1>
-      <p>Tap to enter and enable 360° motion</p>
-      <button onclick="startExperience()">ENTER FOREST</button>
+    <button id="backBtn" onclick="returnToMenu()">← Back to Menu</button>
+
+    <div id="menu">
+      <h1>Historical & Natural Journeys</h1>
+      <p>Select an experience to begin (Enables 360° Tracking)</p>
+      <div class="btn-container">
+        <button class="choice-btn" onclick="startScene('forest', 'forest-image.jpg')">NZ Forest</button>
+        <button class="choice-btn" onclick="startScene('trench', 'trench-image.jpg')">WW1 Trench</button>
+      </div>
     </div>
 
     <a-scene id="mainScene" style="display: none;" cursor="fuse: false; rayOrigin: mouse">
       <a-assets>
-        <img id="forest" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png" crossorigin="anonymous">
+        <img id="skyTexture" src="" crossorigin="anonymous">
       </a-assets>
 
-      <a-sky src="#forest" rotation="0 -90 0"></a-sky>
+      <a-sky id="skyDisplay" src="#skyTexture" rotation="0 -90 0"></a-sky>
 
-      <a-cylinder position="-4 0 -7" radius="0.8" height="5" color="#00FF00" opacity="0.3" 
-                  onclick="alert('This is a Silver Fern (Ponga)!')"></a-cylinder>
+      <a-entity id="interactiveElements"></a-entity>
 
       <a-entity id="cameraRig" position="0 1.6 0">
         <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
@@ -46,31 +65,54 @@
     </a-scene>
 
     <script>
-      function startExperience() {
-        // 1. Request Sensor Permission
+      const menu = document.getElementById('menu');
+      const scene = document.getElementById('mainScene');
+      const backBtn = document.getElementById('backBtn');
+      const sky = document.getElementById('skyTexture');
+      const elements = document.getElementById('interactiveElements');
+
+      function startScene(type, imagePath) {
+        // 1. Request Sensor Permissions for Mobile
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          DeviceOrientationEvent.requestPermission()
-            .then(response => {
-              if (response === 'granted') {
-                runApp();
-              } else {
-                alert("Motion permission denied. Use your finger to swipe.");
-                runApp();
-              }
-            })
-            .catch(console.error);
+          DeviceOrientationEvent.requestPermission().then(response => {
+            if (response === 'granted') { loadScene(type, imagePath); }
+          }).catch(console.error);
         } else {
-          // Android or Desktop
-          runApp();
+          loadScene(type, imagePath);
         }
       }
 
-      function runApp() {
-        // 2. Hide overlay and show scene
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('mainScene').style.display = 'block';
-        // 3. Force A-Frame to resize for the screen
+      function loadScene(type, imagePath) {
+        // Set the image
+        sky.setAttribute('src', imagePath);
+        
+        // Clear previous hitboxes
+        elements.innerHTML = '';
+
+        // UI Toggle
+        menu.style.display = 'none';
+        scene.style.display = 'block';
+        backBtn.style.display = 'block';
+        
+        // Force A-Frame to recalculate size
         document.querySelector('a-scene').resize();
+      }
+
+      function addHitbox(pos, text, color) {
+        const box = document.createElement('a-cylinder');
+        box.setAttribute('position', pos);
+        box.setAttribute('radius', '0.5');
+        box.setAttribute('height', '3');
+        box.setAttribute('color', color);
+        box.setAttribute('opacity', '0.3'); // Set to 0 to hide later
+        box.setAttribute('onclick', `alert('${text}')`);
+        elements.appendChild(box);
+      }
+
+      function returnToMenu() {
+        menu.style.display = 'flex';
+        scene.style.display = 'none';
+        backBtn.style.display = 'none';
       }
     </script>
   </body>
