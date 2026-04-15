@@ -2,93 +2,89 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>360 Historical Viewer</title>
+    <title>XR Experience Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
     <style>
-      body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
-      
-      /* Main Menu Overlay */
+      body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
       #menu {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle, #2c3e50, #000);
         z-index: 9999; display: flex; flex-direction: column; 
         justify-content: center; align-items: center; color: white;
       }
-
       .choice-btn {
-        margin: 15px; padding: 20px 40px; font-size: 1.2rem; cursor: pointer;
+        margin: 10px; padding: 20px 40px; font-size: 1.1rem; cursor: pointer;
         border: 2px solid white; background: rgba(255,255,255,0.1);
-        color: white; border-radius: 12px; transition: 0.3s;
+        color: white; border-radius: 12px; width: 250px;
       }
-
-      .choice-btn:hover { background: white; color: black; }
-
-      /* Back Button */
       #backBtn {
         position: fixed; top: 20px; left: 20px; z-index: 8888;
         padding: 10px 20px; background: rgba(0,0,0,0.6);
-        color: white; border: 1px solid white; border-radius: 5px;
-        display: none; cursor: pointer;
+        color: white; border: 1px solid white; display: none;
       }
     </style>
   </head>
   <body>
 
-    <button id="backBtn" onclick="returnToMenu()">← Back to Menu</button>
+    <button id="backBtn" onclick="location.reload()">← Back to Menu</button>
 
     <div id="menu">
-      <h1>360 Experience Hub</h1>
-      <p>Select a location to explore</p>
-      <button class="choice-btn" onclick="startScene('forest', 'Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png')">New Zealand Forest</button>
-      <button class="choice-btn" onclick="startScene('trench', 'Trench sphere.jpg')">WW1 Trench</button>
+      <h1>XR Explorer</h1>
+      <button class="choice-btn" onclick="start360('forest')">360° NZ Forest</button>
+      <button class="choice-btn" onclick="start360('trench')">360° WW1 Trench</button>
+      <button class="choice-btn" onclick="startAR()">AR: Project Shapes</button>
     </div>
 
-    <a-scene id="mainScene" style="display: none;">
+    <a-scene id="vrScene" style="display: none;">
       <a-assets>
-        <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png" crossorigin="anonymous">
-        <img id="trenchTex" src="Trench sphere.jpg" crossorigin="anonymous">
+        <img id="forestTex" src="forest-image.jpg" crossorigin="anonymous">
+        <img id="trenchTex" src="trench-image.jpg" crossorigin="anonymous">
       </a-assets>
-
       <a-sky id="skyDisplay" rotation="0 -90 0"></a-sky>
+      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true"></a-entity>
+    </a-scene>
 
-      <a-entity id="cameraRig" position="0 1.6 0">
-        <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
-        </a-entity>
-      </a-entity>
+    <a-scene id="arScene" style="display: none;" embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+      <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E"></a-box>
+      <a-sphere position="0 1.25 -5" radius="1.25" color="#4CC3D9"></a-sphere>
+      <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+      
+      <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-      function startScene(type, img) {
-        // Request Permissions for Mobile Motion Sensors
+      function start360(type) {
+        // Request Motion Permissions
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().then(res => {
-            if (res === 'granted') showScene(type);
-          }).catch(err => {
-            console.log(err);
-            showScene(type); // Fallback if permission fails
+            if (res === 'granted') showVR(type);
           });
         } else {
-          showScene(type);
+          showVR(type);
         }
       }
 
-      function showScene(type) {
+      function showVR(type) {
         document.getElementById('menu').style.display = 'none';
-        document.getElementById('mainScene').style.display = 'block';
         document.getElementById('backBtn').style.display = 'block';
-
-        const sky = document.getElementById('skyDisplay');
-        // Set the sky to use the preloaded asset ID
-        sky.setAttribute('src', (type === 'forest') ? '#forestTex' : '#trenchTex');
+        const scene = document.getElementById('vrScene');
+        scene.style.display = 'block';
         
-        // Ensure A-Frame refreshes the layout for the device
-        document.querySelector('a-scene').resize();
+        const sky = document.getElementById('skyDisplay');
+        sky.setAttribute('src', (type === 'forest') ? '#forestTex' : '#trenchTex');
+        scene.resize();
       }
 
-      function returnToMenu() {
-        // Refreshing is the cleanest way to reset the VR state
-        location.reload();
+      function startAR() {
+        document.getElementById('menu').style.display = 'none';
+        document.getElementById('backBtn').style.display = 'block';
+        const scene = document.getElementById('arScene');
+        scene.style.display = 'block';
+        // Note: The browser will ask for camera permission here
       }
     </script>
   </body>
