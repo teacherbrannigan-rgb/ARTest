@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>XR Experience Hub</title>
+    <title>XR Universal Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
@@ -10,21 +10,29 @@
 
     <style>
       body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
+      
+      /* Navigation Menu */
       #menu {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle, #2c3e50, #000);
         z-index: 9999; display: flex; flex-direction: column; 
         justify-content: center; align-items: center; color: white;
       }
+      
       .choice-btn {
         margin: 10px; padding: 20px 40px; font-size: 1.1rem; cursor: pointer;
         border: 2px solid white; background: rgba(255,255,255,0.1);
-        color: white; border-radius: 12px; width: 250px;
+        color: white; border-radius: 12px; width: 280px; transition: 0.3s;
       }
+
+      .choice-btn:hover { background: white; color: black; }
+
+      /* Reset Button */
       #backBtn {
         position: fixed; top: 20px; left: 20px; z-index: 8888;
-        padding: 10px 20px; background: rgba(0,0,0,0.6);
-        color: white; border: 1px solid white; display: none;
+        padding: 12px 24px; background: rgba(0,0,0,0.8);
+        color: white; border: 1px solid white; border-radius: 8px;
+        display: none; cursor: pointer; font-weight: bold;
       }
     </style>
   </head>
@@ -33,45 +41,40 @@
     <button id="backBtn" onclick="location.reload()">← Back to Menu</button>
 
     <div id="menu">
-      <h1>XR Explorer</h1>
-      <button class="choice-btn" onclick="start360('forest')">360° NZ Forest</button>
-      <button class="choice-btn" onclick="start360('trench')">360° WW1 Trench</button>
-      <button class="choice-btn" onclick="startAR()">AR: Project Shapes</button>
+      <h1 style="margin-bottom: 30px;">Historical & AR Explorer</h1>
+      <button class="choice-btn" onclick="start360('forestTex')">360° NZ Forest</button>
+      <button class="choice-btn" onclick="start360('trenchTex')">360° WW1 Trench</button>
+      <button class="choice-btn" onclick="startAR()">AR: Room Projector</button>
     </div>
 
-    <a-scene id="vrScene" style="display: none;">
-      <a-assets>
-        <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png" crossorigin="anonymous">
-        <img id="trenchTex" src="Trench sphere.jpg" crossorigin="anonymous">
-      </a-assets>
-      <a-sky id="skyDisplay" rotation="0 -95 0"></a-sky>
-      <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true"></a-entity>
-    </a-scene>
-
-    <a-scene id="arScene" style="display: none;" embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <a-box position="-1 1 -2" rotation="0 45 0" color="#EF2D5E"></a-box>
-      <a-sphere position="0 1.25 -5" radius=".75" color="#4CC3D9"></a-sphere>
-      <a-cylinder position="1 0 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+    <a-scene id="mainScene" style="display: none;" renderer="antialias: true; colorManagement: true;">
       
-      <a-entity camera></a-entity>
-    </a-scene>
-
-    <script>
-<a-scene id="mainScene" style="display: none;" renderer="antialias: true; colorManagement: true;">
       <a-assets>
         <img id="forestTex" src="forest-image.jpg" crossorigin="anonymous">
         <img id="trenchTex" src="trench-image.jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-sky id="skyDisplay" visible="false" rotation="0 -90 0" segments-width="64" segments-height="64"></a-sky>
+      <a-sky id="skyDisplay" 
+             visible="false" 
+             rotation="0 -90 0" 
+             radius="100" 
+             segments-width="64" 
+             segments-height="64">
+      </a-sky>
 
       <a-entity id="arGroup" visible="false">
-        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E"></a-box>
-        <a-sphere position="0 1.25 -5" radius="1.25" color="#4CC3D9"></a-sphere>
-        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E" scale="0.5 0.5 0.5"></a-box>
+        <a-sphere position="0 1.25 -5" radius="1.25" color="#4CC3D9" scale="0.5 0.5 0.5"></a-sphere>
+        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" scale="0.5 0.5 0.5"></a-cylinder>
       </a-entity>
 
-      <a-entity id="cam" camera="fov: 80" look-controls="magicWindowTrackingEnabled: true; touchEnabled: true" position="0 1.6 0"></a-entity>
+      <a-entity id="cameraRig" position="0 1.6 0">
+        <a-entity id="cam" 
+                  camera="fov: 90" 
+                  look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
+        </a-entity>
+      </a-entity>
+
     </a-scene>
 
     <script>
@@ -82,6 +85,7 @@
       const arGroup = document.getElementById('arGroup');
 
       function start360(texID) {
+        // Request motion sensor permissions for mobile
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().then(res => {
             if (res === 'granted') run360(texID);
@@ -98,8 +102,9 @@
         
         sky.setAttribute('visible', 'true');
         sky.setAttribute('src', '#' + texID);
-        
-        // This forces the image to look sharper by preventing "blur" filtering
+        arGroup.setAttribute('visible', 'false');
+
+        // Apply high-quality texture filtering once the image loads
         sky.addEventListener('materialtextureloaded', () => {
           const mesh = sky.getObject3D('mesh');
           if (mesh && mesh.material.map) {
@@ -109,7 +114,6 @@
           }
         });
 
-        arGroup.setAttribute('visible', 'false');
         scene.resize();
       }
 
@@ -117,9 +121,13 @@
         menu.style.display = 'none';
         backBtn.style.display = 'block';
         scene.style.display = 'block';
+
         sky.setAttribute('visible', 'false');
         arGroup.setAttribute('visible', 'true');
+
+        // Activates camera feed background
         scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+        
         scene.resize();
       }
     </script>
