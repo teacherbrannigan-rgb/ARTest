@@ -44,7 +44,7 @@
         <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png" crossorigin="anonymous">
         <img id="trenchTex" src="Trench sphere.jpg" crossorigin="anonymous">
       </a-assets>
-      <a-sky id="skyDisplay" rotation="0 -85 0"></a-sky>
+      <a-sky id="skyDisplay" rotation="0 -95 0"></a-sky>
       <a-entity camera look-controls="magicWindowTrackingEnabled: true; touchEnabled: true"></a-entity>
     </a-scene>
 
@@ -57,34 +57,70 @@
     </a-scene>
 
     <script>
-      function start360(type) {
-        // Request Motion Permissions
+<a-scene id="mainScene" style="display: none;" renderer="antialias: true; colorManagement: true;">
+      <a-assets>
+        <img id="forestTex" src="forest-image.jpg" crossorigin="anonymous">
+        <img id="trenchTex" src="trench-image.jpg" crossorigin="anonymous">
+      </a-assets>
+
+      <a-sky id="skyDisplay" visible="false" rotation="0 -90 0" segments-width="64" segments-height="64"></a-sky>
+
+      <a-entity id="arGroup" visible="false">
+        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E"></a-box>
+        <a-sphere position="0 1.25 -5" radius="1.25" color="#4CC3D9"></a-sphere>
+        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+      </a-entity>
+
+      <a-entity id="cam" camera="fov: 80" look-controls="magicWindowTrackingEnabled: true; touchEnabled: true" position="0 1.6 0"></a-entity>
+    </a-scene>
+
+    <script>
+      const menu = document.getElementById('menu');
+      const scene = document.getElementById('mainScene');
+      const backBtn = document.getElementById('backBtn');
+      const sky = document.getElementById('skyDisplay');
+      const arGroup = document.getElementById('arGroup');
+
+      function start360(texID) {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().then(res => {
-            if (res === 'granted') showVR(type);
-          });
+            if (res === 'granted') run360(texID);
+          }).catch(() => run360(texID)); 
         } else {
-          showVR(type);
+          run360(texID);
         }
       }
 
-      function showVR(type) {
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('backBtn').style.display = 'block';
-        const scene = document.getElementById('vrScene');
+      function run360(texID) {
+        menu.style.display = 'none';
+        backBtn.style.display = 'block';
         scene.style.display = 'block';
         
-        const sky = document.getElementById('skyDisplay');
-        sky.setAttribute('src', (type === 'forest') ? '#forestTex' : '#trenchTex');
+        sky.setAttribute('visible', 'true');
+        sky.setAttribute('src', '#' + texID);
+        
+        // This forces the image to look sharper by preventing "blur" filtering
+        sky.addEventListener('materialtextureloaded', () => {
+          const mesh = sky.getObject3D('mesh');
+          if (mesh && mesh.material.map) {
+            mesh.material.map.magFilter = THREE.LinearFilter;
+            mesh.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.map.needsUpdate = true;
+          }
+        });
+
+        arGroup.setAttribute('visible', 'false');
         scene.resize();
       }
 
       function startAR() {
-        document.getElementById('menu').style.display = 'none';
-        document.getElementById('backBtn').style.display = 'block';
-        const scene = document.getElementById('arScene');
+        menu.style.display = 'none';
+        backBtn.style.display = 'block';
         scene.style.display = 'block';
-        // Note: The browser will ask for camera permission here
+        sky.setAttribute('visible', 'false');
+        arGroup.setAttribute('visible', 'true');
+        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+        scene.resize();
       }
     </script>
   </body>
