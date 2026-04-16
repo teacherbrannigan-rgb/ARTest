@@ -1,9 +1,8 @@
-HTML
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Ultimate XR Explorer</title>
+    <title>XR Universal Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
@@ -11,70 +10,71 @@ HTML
 
     <style>
       body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
+      
+      /* Navigation Menu */
       #menu {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: radial-gradient(circle, #2c3e50, #000);
         z-index: 9999; display: flex; flex-direction: column; 
         justify-content: center; align-items: center; color: white;
       }
+      
       .choice-btn {
-        margin: 8px; padding: 18px 30px; font-size: 1rem; cursor: pointer;
+        margin: 10px; padding: 20px 40px; font-size: 1.1rem; cursor: pointer;
         border: 2px solid white; background: rgba(255,255,255,0.1);
         color: white; border-radius: 12px; width: 280px; transition: 0.3s;
       }
+
       .choice-btn:hover { background: white; color: black; }
+
+      /* Reset Button */
       #backBtn {
         position: fixed; top: 20px; left: 20px; z-index: 8888;
         padding: 12px 24px; background: rgba(0,0,0,0.8);
         color: white; border: 1px solid white; border-radius: 8px;
-        display: none; cursor: pointer;
-      }
-      #ar-instructions {
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        background: rgba(0,0,0,0.7); color: white; padding: 10px; 
-        border-radius: 10px; display: none; z-index: 1000; pointer-events: none;
+        display: none; cursor: pointer; font-weight: bold;
       }
     </style>
   </head>
   <body>
 
     <button id="backBtn" onclick="location.reload()">← Back to Menu</button>
-    <div id="ar-instructions">Scan floor slowly and tap to "Drop" objects</div>
 
     <div id="menu">
-      <h1 style="margin-bottom: 20px;">XR Explorer Hub</h1>
+      <h1 style="margin-bottom: 30px;">Historical & AR Explorer</h1>
       <button class="choice-btn" onclick="start360('forestTex')">360° NZ Forest</button>
       <button class="choice-btn" onclick="start360('trenchTex')">360° WW1 Trench</button>
-      <button class="choice-btn" onclick="startStaticAR()">AR: Simple Projector</button>
-      <button class="choice-btn" style="border-color: #4CC3D9;" onclick="startHitTestAR()">AR: Drop & Walk (Chrome/WebXR)</button>
+      <button class="choice-btn" onclick="startAR()">AR: Room Projector</button>
     </div>
 
-    <a-scene id="mainScene" style="display: none;" 
-             webxr="optionalFeatures: hit-test;" 
-             renderer="antialias: true; colorManagement: true;">
+    <a-scene id="mainScene" style="display: none;" renderer="antialias: true; colorManagement: true;">
       
       <a-assets>
         <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdhy.png" crossorigin="anonymous">
         <img id="trenchTex" src="Trench sphere.jpg" crossorigin="anonymous">
       </a-assets>
 
-      <a-sky id="skyDisplay" visible="false" radius="100" rotation="0 -90 0"></a-sky>
+      <a-sky id="skyDisplay" 
+             visible="false" 
+             rotation="0 -90 0" 
+             radius="100" 
+             segments-width="64" 
+             segments-height="64">
+      </a-sky>
 
-      <a-entity id="arStaticGroup" visible="false">
+      <a-entity id="arGroup" visible="false">
         <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E" scale="0.5 0.5 0.5"></a-box>
         <a-sphere position="0 1.25 -5" radius="1.25" color="#4CC3D9" scale="0.5 0.5 0.5"></a-sphere>
         <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D" scale="0.5 0.5 0.5"></a-cylinder>
       </a-entity>
 
-      <a-entity id="hitTestAnchor" ar-hit-test="target: #droppedObjects; type: floor;">
-         <a-entity id="droppedObjects" visible="false">
-            <a-box position="-0.5 0.25 0" scale="0.3 0.3 0.3" color="#EF2D5E"></a-box>
-            <a-sphere position="0 0.4 -0.8" radius="0.4" color="#4CC3D9"></a-sphere>
-            <a-cylinder position="0.5 0.3 0" radius="0.2" height="0.6" color="#FFC65D"></a-cylinder>
-         </a-entity>
+      <a-entity id="cameraRig" position="0 1.6 0">
+        <a-entity id="cam" 
+                  camera="fov: 90" 
+                  look-controls="magicWindowTrackingEnabled: true; touchEnabled: true">
+        </a-entity>
       </a-entity>
 
-      <a-entity id="cam" camera="fov: 80" look-controls="magicWindowTrackingEnabled: true; touchEnabled: true" position="0 1.6 0"></a-entity>
     </a-scene>
 
     <script>
@@ -82,55 +82,54 @@ HTML
       const scene = document.getElementById('mainScene');
       const backBtn = document.getElementById('backBtn');
       const sky = document.getElementById('skyDisplay');
-      const staticGroup = document.getElementById('arStaticGroup');
-      const droppedObjects = document.getElementById('droppedObjects');
-      const instructions = document.getElementById('ar-instructions');
+      const arGroup = document.getElementById('arGroup');
 
       function start360(texID) {
+        // Request motion sensor permissions for mobile
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
           DeviceOrientationEvent.requestPermission().then(res => {
             if (res === 'granted') run360(texID);
-          });
-        } else { run360(texID); }
+          }).catch(() => run360(texID)); 
+        } else {
+          run360(texID);
+        }
       }
 
       function run360(texID) {
-        setupScene();
-        sky.setAttribute('visible', 'true');
-        sky.setAttribute('src', '#' + texID);
-        staticGroup.setAttribute('visible', 'false');
-      }
-
-      function startStaticAR() {
-        setupScene();
-        sky.setAttribute('visible', 'false');
-        staticGroup.setAttribute('visible', 'true');
-        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
-      }
-
-      function startHitTestAR() {
-        setupScene();
-        instructions.style.display = 'block';
-        sky.setAttribute('visible', 'false');
-        staticGroup.setAttribute('visible', 'false');
-        // This mode relies on the browser's native WebXR button (usually says "Start AR")
-        // No arjs attribute needed for native WebXR
-      }
-
-      function setupScene() {
         menu.style.display = 'none';
         backBtn.style.display = 'block';
         scene.style.display = 'block';
+        
+        sky.setAttribute('visible', 'true');
+        sky.setAttribute('src', '#' + texID);
+        arGroup.setAttribute('visible', 'false');
+
+        // Apply high-quality texture filtering once the image loads
+        sky.addEventListener('materialtextureloaded', () => {
+          const mesh = sky.getObject3D('mesh');
+          if (mesh && mesh.material.map) {
+            mesh.material.map.magFilter = THREE.LinearFilter;
+            mesh.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+            mesh.material.map.needsUpdate = true;
+          }
+        });
+
         scene.resize();
       }
 
-      // Logic for the "Drop" action
-      window.addEventListener('click', function () {
-        if (droppedObjects && !droppedObjects.getAttribute('visible')) {
-          droppedObjects.setAttribute('visible', 'true');
-          instructions.innerText = "Objects Dropped! Walk around them.";
-        }
-      });
+      function startAR() {
+        menu.style.display = 'none';
+        backBtn.style.display = 'block';
+        scene.style.display = 'block';
+
+        sky.setAttribute('visible', 'false');
+        arGroup.setAttribute('visible', 'true');
+
+        // Activates camera feed background
+        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
+        
+        scene.resize();
+      }
     </script>
   </body>
 </html>
