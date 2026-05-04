@@ -140,10 +140,33 @@
       function startPersistentCat() {
         setupScene();
         mode = "cat";
-        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
-        instructions.innerText = "Point at Cat Image to Lock Anchor";
+        // We use detectionMode: 'mono_and_matrix' for better 'lock' stability
+        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;');
+        instructions.innerText = "Align camera with Cat Image...";
         instructions.style.display = "block";
       }
+
+      // Replace the markerFound event listener
+      catMarker.addEventListener('markerFound', () => {
+        if (mode === "cat") {
+          // 1. Create a matrix to capture the marker's exact location in the room
+          const markerMatrix = catMarker.object3D.matrixWorld;
+          
+          // 2. Apply that matrix to the persistentCat
+          // This "snaps" the cat to the coordinates of the paper
+          persistentCat.object3D.applyMatrix4(markerMatrix);
+          
+          // 3. Make the cat visible
+          persistentCat.setAttribute('visible', 'true');
+          
+          // 4. STOP tracking the marker to prevent "jumping" or "sticking"
+          // This turns it into a stationary hologram
+          instructions.innerText = "Hologram Anchored! You can walk around it.";
+          
+          // Optional: Vibrate phone to signal successful lock
+          if (navigator.vibrate) navigator.vibrate(200);
+        }
+      });
 
       // World-Handoff Logic for the Cat
       catMarker.addEventListener('markerFound', () => {
