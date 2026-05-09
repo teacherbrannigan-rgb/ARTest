@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>XR Master Explorer</title>
+    <title>XR Video & Image Hub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
@@ -17,9 +17,9 @@
         justify-content: center; align-items: center; color: white;
       }
       .choice-btn {
-        margin: 5px; padding: 15px 25px; font-size: 0.9rem; cursor: pointer;
+        margin: 8px; padding: 18px 30px; font-size: 1rem; cursor: pointer;
         border: 2px solid white; background: rgba(255,255,255,0.1);
-        color: white; border-radius: 12px; width: 310px; transition: 0.2s;
+        color: white; border-radius: 12px; width: 300px; transition: 0.3s;
       }
       .choice-btn:hover { background: white; color: black; }
       #backBtn {
@@ -41,52 +41,45 @@
     <div id="ar-instructions">Initializing...</div>
 
     <div id="menu">
-      <h1 style="margin-bottom: 15px;">XR Explorer Hub</h1>
-      <button class="choice-btn" onclick="start360('forestTex')">360° NZ Forest</button>
-      <button class="choice-btn" onclick="start360('trenchTex')">360° WW1 Trench</button>
+      <h1 style="margin-bottom: 20px;">XR Explorer</h1>
+      <button class="choice-btn" onclick="start360('forestTex')">360° NZ Forest (Image)</button>
+      <button class="choice-btn" onclick="start360('trenchTex')">360° WW1 Trench (Image)</button>
+      <button class="choice-btn" style="border-color: #3498db;" onclick="startVideo()">360° VR Experience (Video)</button>
       <button class="choice-btn" onclick="startStaticAR()">AR: Simple Projector</button>
-      <button class="choice-btn" onclick="startHitTestAR()">AR: Drop & Walk (Chrome)</button>
-      <button class="choice-btn" onclick="startImageTracking()">AR: Hiro Marker Tracker</button>
-      <button class="choice-btn" style="border-color: #f39c12; font-weight: bold;" onclick="startPersistentCat()">AR: Persistent Cat (Image Tracker)</button>
+      <button class="choice-btn" style="border-color: #f39c12;" onclick="startPersistentCat()">AR: Holographic Cat Tracker</button>
     </div>
 
-    <a-scene id="mainScene" style="display: none;" webxr="optionalFeatures: hit-test;" renderer="antialias: true; colorManagement: true;">
+    <a-scene id="mainScene" style="display: none;" renderer="antialias: true; colorManagement: true;">
       
       <a-assets>
-        <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdhy.png" crossorigin="anonymous">
+        <img id="forestTex" src="Gemini_Generated_Image_ojdhy8ojdhy8ojdh.png" crossorigin="anonymous">
         <img id="trenchTex" src="Trench sphere.jpg" crossorigin="anonymous">
         <img id="catFace" src="pattern_Cat.png" crossorigin="anonymous">
+        
+        <video id="vrVideo" src="video test.mp4" loop="true" crossorigin="anonymous" playsinline webkit-playsinline></video>
       </a-assets>
 
       <a-sky id="skyDisplay" visible="false" radius="100" rotation="0 -90 0"></a-sky>
 
+      <a-videosphere id="videoDisplay" src="#vrVideo" visible="false" radius="100" rotation="0 -90 0"></a-videosphere>
+
       <a-entity id="arStaticGroup" visible="false">
-        <a-box position="-1 0.5 -3" rotation="0 45 0" color="#EF2D5E" scale="0.5 0.5 0.5"></a-box>
+        <a-box position="0 0.5 -3" rotation="0 45 0" color="#EF2D5E" scale="0.5 0.5 0.5"></a-box>
       </a-entity>
-
-      <a-entity id="hitTestAnchor" ar-hit-test="target: #droppedObjects; type: floor;">
-         <a-entity id="droppedObjects" visible="false">
-            <a-torus-knot color="#BBAEFB" radius="0.3" position="0 0.5 0" scale="0.5 0.5 0.5"></a-torus-knot>
-         </a-entity>
-      </a-entity>
-
-      <a-marker id="hiroMarker" preset="hiro" visible="false">
-        <a-box position="0 0.5 0" scale="0.3 0.3 0.3" color="yellow"></a-box>
-      </a-marker>
 
       <a-marker id="catMarker" type="pattern" url="pattern-cat.patt" emitevents="true"></a-marker>
       
       <a-entity id="persistentCat" visible="false">
         <a-entity position="0 0.3 0" scale="0.2 0.2 0.2">
-            <a-plane position="0 0 0.5" src="#catFace"></a-plane>
-            <a-plane position="0 0 -0.5" rotation="0 180 0" color="#f39c12"></a-plane>
-            <a-plane position="-0.5 0 0" rotation="0 -90 0" color="#e67e22"></a-plane>
-            <a-plane position="0.5 0 0" rotation="0 90 0" color="#d35400"></a-plane>
-            <a-plane position="0 0.5 0" rotation="-90 0 0" color="#f1c40f"></a-plane>
+            <a-plane position="0 0 0.5" src="#catFace" material="transparent: true; opacity: 0.9;"></a-plane>
+            <a-plane position="0 0 -0.5" rotation="0 180 0" color="#f39c12" material="opacity: 0.7;"></a-plane>
+            <a-plane position="-0.5 0 0" rotation="0 -90 0" color="#e67e22" material="opacity: 0.7;"></a-plane>
+            <a-plane position="0.5 0 0" rotation="0 90 0" color="#d35400" material="opacity: 0.7;"></a-plane>
+            <a-plane position="0 0.5 0" rotation="-90 0 0" color="#f1c40f" material="opacity: 0.7;"></a-plane>
         </a-entity>
       </a-entity>
 
-      <a-entity id="cam" camera="fov: 80" look-controls="magicWindowTrackingEnabled: true; touchEnabled: true" position="0 1.6 0"></a-entity>
+      <a-entity id="cam" camera="fov: 80" look-controls position="0 1.6 0"></a-entity>
     </a-scene>
 
     <script>
@@ -94,14 +87,14 @@
       const scene = document.getElementById('mainScene');
       const backBtn = document.getElementById('backBtn');
       const sky = document.getElementById('skyDisplay');
+      const videoSphere = document.getElementById('videoDisplay');
+      const videoAsset = document.getElementById('vrVideo');
       const staticGroup = document.getElementById('arStaticGroup');
-      const droppedObjects = document.getElementById('droppedObjects');
-      const hiroMarker = document.getElementById('hiroMarker');
-      const catMarker = document.getElementById('catMarker');
       const persistentCat = document.getElementById('persistentCat');
+      const catMarker = document.getElementById('catMarker');
       const instructions = document.getElementById('ar-instructions');
 
-      let mode = "";
+      let currentMode = "";
 
       function setupScene() {
         menu.style.display = 'none';
@@ -116,77 +109,39 @@
         sky.setAttribute('src', '#' + texID);
       }
 
+      function startVideo() {
+        setupScene();
+        videoSphere.setAttribute('visible', 'true');
+        // Mobile browsers require a user gesture to play video
+        videoAsset.play();
+      }
+
       function startStaticAR() {
         setupScene();
         staticGroup.setAttribute('visible', 'true');
         scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
       }
 
-      function startHitTestAR() {
-        setupScene();
-        mode = "hit-test";
-        instructions.innerText = "Scan floor and tap to drop object";
-        instructions.style.display = "block";
-      }
-
-      function startImageTracking() {
-        setupScene();
-        hiroMarker.setAttribute('visible', 'true');
-        scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false;');
-        instructions.innerText = "Point at Hiro Marker";
-        instructions.style.display = "block";
-      }
-
       function startPersistentCat() {
         setupScene();
-        mode = "cat";
-        // We use detectionMode: 'mono_and_matrix' for better 'lock' stability
+        currentMode = "cat";
         scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix;');
-        instructions.innerText = "Align camera with Cat Image...";
+        instructions.innerText = "Align camera with Cat Image to Lock Hologram";
         instructions.style.display = "block";
       }
 
-      // Replace the markerFound event listener
+      // HOLOGRAPHIC SNAP LOGIC
       catMarker.addEventListener('markerFound', () => {
-        if (mode === "cat") {
-          // 1. Create a matrix to capture the marker's exact location in the room
+        if (currentMode === "cat") {
+          // Snap the persistent cat to the marker's world location
           const markerMatrix = catMarker.object3D.matrixWorld;
-          
-          // 2. Apply that matrix to the persistentCat
-          // This "snaps" the cat to the coordinates of the paper
           persistentCat.object3D.applyMatrix4(markerMatrix);
           
-          // 3. Make the cat visible
           persistentCat.setAttribute('visible', 'true');
+          instructions.innerText = "Hologram Anchored! You can move around it.";
           
-          // 4. STOP tracking the marker to prevent "jumping" or "sticking"
-          // This turns it into a stationary hologram
-          instructions.innerText = "Hologram Anchored! You can walk around it.";
-          
-          // Optional: Vibrate phone to signal successful lock
-          if (navigator.vibrate) navigator.vibrate(200);
-        }
-      });
-
-      // World-Handoff Logic for the Cat
-      catMarker.addEventListener('markerFound', () => {
-        if (mode === "cat") {
-          // Capture marker position in world space
-          const worldPos = new THREE.Vector3();
-          catMarker.object3D.getWorldPosition(worldPos);
-          
-          persistentCat.setAttribute('position', worldPos);
-          persistentCat.setAttribute('rotation', catMarker.getAttribute('rotation'));
-          persistentCat.setAttribute('visible', 'true');
-          
-          instructions.innerText = "Cat Locked! You can now move around it.";
-        }
-      });
-
-      window.addEventListener('click', function () {
-        if (mode === "hit-test" && !droppedObjects.getAttribute('visible')) {
-          droppedObjects.setAttribute('visible', 'true');
-          instructions.innerText = "Dropped!";
+          // Disable further marker tracking so it stays fixed in the room
+          currentMode = "locked"; 
         }
       });
     </script>
